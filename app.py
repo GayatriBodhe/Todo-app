@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
@@ -24,13 +24,43 @@ def hello_world():
         todo = Todo(title=title, desc=desc)
         db.session.add(todo)
         db.session.commit()
+    allTodo = Todo.query.all()
+    image_url = 'https://cdn-icons-png.flaticon.com/512/7590/7590241.png'
+    return render_template('index.html',allTodo=allTodo, image_url=image_url)
+        
+# @app.route('/')
+# def hello():
+#     image_url = 'https://cdn-icons-png.flaticon.com/512/7590/7590241.png'
+#     return render_template('index.html', image_url=image_url)
 
-    allTodo = Todo.query.all()  # Query all todos from the database
-    return render_template("index.html", allTodo=allTodo)
 
-@app.route("/products")
+@app.route('/show')
 def products():
-    return 'this is the products page'
+    allTodo = Todo.query.all()
+    print(allTodo)
+    return redirect('/')
+
+@app.route('/delete/<int:sno>')
+def delete(sno):
+    todo = Todo.query.filter_by(sno=sno).first()
+    if todo:
+        db.session.delete(todo)
+        db.session.commit()
+    return redirect('/')
+
+@app.route('/update/<int:sno>' , methods=['GET', 'POST'])
+def update(sno):
+    if request.method =='POST':
+        title = request.form['title']
+        desc = request.form['desc']
+        todo = Todo.query.filter_by(sno=sno).first()
+        todo.title = title
+        todo.desc = desc
+        db.session.add(todo)
+        db.session.commit()
+        return redirect('/')
+    todo = Todo.query.filter_by(sno=sno).first()
+    return render_template('update.html', todo=todo)
 
 if __name__ == "__main__":
     with app.app_context():
